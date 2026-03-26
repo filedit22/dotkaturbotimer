@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Turbominder 1.03</title>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0c10;
+    --panel: #111318;
+    --border: #1e2330;
+    --accent-gold: #f0c040;
+    --accent-teal: #40d9c0;
+    --accent-purple: #9b6dff;
+    --accent-red: #ff5555;
+    --accent-orange: #ff9030;
+    --text: #e8eaf0;
+    --muted: #5a6080;
+    --glow-gold: 0 0 16px #f0c04066;
+    --glow-teal: 0 0 16px #40d9c066;
+    --glow-purple: 0 0 16px #9b6dff66;
+    --glow-red: 0 0 16px #ff555566;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 16px 80px;
+    background-image:
+      radial-gradient(ellipse at 20% 10%, #1a1030 0%, transparent 50%),
+      radial-gradient(ellipse at 80% 90%, #0a1a20 0%, transparent 50%);
+  }
+
+  /* MASTER CLOCK */
+  .clock-panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 28px 36px;
+    width: 100%;
+    max-width: 520px;
+    margin-bottom: 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .clock-panel::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--accent-teal), transparent);
+  }
+  .clock-display {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(3rem, 12vw, 5rem);
+    font-weight: 700;
+    color: var(--accent-teal);
+    text-shadow: var(--glow-teal);
+    letter-spacing: 0.05em;
+    line-height: 1;
+    margin-bottom: 24px;
+    transition: color 0.3s;
+  }
+  .clock-display.running { color: #60ffb0; text-shadow: 0 0 20px #60ffb066; }
+  .adjust-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+  .adjust-label {
+    font-size: 0.75rem;
+    letter-spacing: 0.15em;
+    color: var(--muted);
+    text-transform: uppercase;
+    width: 100%;
+    text-align: center;
+    margin-bottom: 4px;
+  }
+  .spin-group { display: flex; flex-direction: column; align-items: center; gap: 4px; }
+  .spin-label { font-size: 0.7rem; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }
+  .spin-input {
+    width: 72px; text-align: center;
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'Orbitron', monospace;
+    font-size: 1.2rem;
+    padding: 8px 4px;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .spin-input:focus { border-color: var(--accent-teal); box-shadow: var(--glow-teal); }
+  .spin-input::-webkit-outer-spin-button,
+  .spin-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .spin-input[type=number] { -moz-appearance: textfield; }
+  .colon-sep { font-family: 'Orbitron', monospace; font-size: 1.6rem; color: var(--muted); margin-top: 18px; }
+  .btn-row { display: flex; gap: 12px; justify-content: center; }
+  .btn {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem; font-weight: 700;
+    letter-spacing: 0.12em;
+    padding: 12px 28px;
+    border-radius: 8px; border: none;
+    cursor: pointer; transition: all 0.18s;
+    text-transform: uppercase;
+  }
+  .btn-start {
+    background: linear-gradient(135deg, #1a4a30, #0d6e44);
+    color: #60ffb0; border: 1px solid #0d6e44;
+    box-shadow: 0 0 12px #0d6e4444;
+  }
+  .btn-start:hover { background: linear-gradient(135deg, #1e5836, #0f8052); box-shadow: 0 0 20px #0d6e4466; }
+  .btn-reset {
+    background: linear-gradient(135deg, #2a1a1a, #5a2020);
+    color: var(--accent-red); border: 1px solid #5a2020;
+    box-shadow: 0 0 12px #5a202044;
+  }
+  .btn-reset:hover { background: linear-gradient(135deg, #3a2020, #7a2828); box-shadow: 0 0 20px #ff555544; }
+  .voice-status {
+    margin-top: 14px; font-size: 0.72rem;
+    letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase;
+  }
+  .voice-status span { color: var(--accent-teal); }
+
+  /* TIMER CARDS */
+  .timers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px; width: 100%; max-width: 520px;
+  }
+  .timer-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 16px 16px 14px;
+    position: relative; overflow: hidden;
+    transition: transform 0.2s, box-shadow 0.3s;
+  }
+  .timer-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0; height: 3px;
+  }
+  /* color slots */
+  .slot-0::before { background: var(--accent-gold); }
+  .slot-1::before { background: var(--accent-teal); }
+  .slot-2::before { background: var(--accent-purple); }
+  .slot-3::before { background: var(--accent-red); }
+
+  .timer-card.alert { animation: pulse-card 0.6s ease-in-out 3; }
+  .timer-card.warn  { animation: pulse-warn 0.5s ease-in-out 2; }
+  @keyframes pulse-card { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
+  @keyframes pulse-warn  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.02)} }
+
+  .slot-0.alert { box-shadow: var(--glow-gold), 0 0 40px #f0c04040; }
+  .slot-1.alert { box-shadow: var(--glow-teal), 0 0 40px #40d9c040; }
+  .slot-2.alert { box-shadow: var(--glow-purple), 0 0 40px #9b6dff40; }
+  .slot-3.alert { box-shadow: var(--glow-red), 0 0 40px #ff555540; }
+  .slot-0.warn  { box-shadow: 0 0 20px #f0c04088; }
+  .slot-1.warn  { box-shadow: 0 0 20px #40d9c088; }
+  .slot-2.warn  { box-shadow: 0 0 20px #9b6dff88; }
+  .slot-3.warn  { box-shadow: 0 0 20px #ff555588; }
+
+  /* ── CARD HEADER ── */
+  .card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+    gap: 8px;
+  }
+
+  /* Editable name */
+  .card-name-input {
+    font-family: 'Orbitron', monospace;
+    font-size: 0.85rem; font-weight: 700;
+    letter-spacing: 0.1em;
+    background: transparent;
+    border: none;
+    border-bottom: 1px dashed transparent;
+    outline: none;
+    width: 120px;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: border-color 0.2s, background 0.2s, padding 0.15s;
+    padding: 2px 4px;
+    border-radius: 4px 4px 0 0;
+  }
+  .card-name-input:hover  { border-bottom-color: var(--muted); }
+  .card-name-input:focus  {
+    background: #0d0f14;
+    border-bottom-color: var(--accent-teal);
+    cursor: text;
+  }
+  .slot-0 .card-name-input { color: var(--accent-gold); }
+  .slot-1 .card-name-input { color: var(--accent-teal); }
+  .slot-2 .card-name-input { color: var(--accent-purple); }
+  .slot-3 .card-name-input { color: var(--accent-red); }
+
+  /* Interval editor */
+  .interval-group {
+    display: flex; flex-direction: column;
+    align-items: flex-end; gap: 2px; flex-shrink: 0;
+  }
+  .interval-label {
+    font-size: 0.6rem; color: var(--muted);
+    letter-spacing: 0.1em; text-transform: uppercase;
+  }
+  .interval-inputs { display: flex; align-items: center; gap: 2px; }
+  .int-input {
+    width: 36px; text-align: center;
+    background: #0d0f14;
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    color: var(--text);
+    font-family: 'Orbitron', monospace;
+    font-size: 0.78rem;
+    padding: 3px 2px; outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+  .int-input:focus { border-color: var(--accent-teal); box-shadow: 0 0 8px #40d9c033; }
+  .int-input::-webkit-outer-spin-button,
+  .int-input::-webkit-inner-spin-button { -webkit-appearance: none; }
+  .int-input[type=number] { -moz-appearance: textfield; }
+  .int-colon { font-family: 'Orbitron', monospace; font-size: 0.78rem; color: var(--muted); }
+
+  /* Countdown */
+  .card-countdown {
+    font-family: 'Orbitron', monospace;
+    font-size: 2rem; font-weight: 700;
+    line-height: 1; margin-bottom: 10px;
+    transition: color 0.3s;
+  }
+  .slot-0 .card-countdown { color: var(--accent-gold); }
+  .slot-1 .card-countdown { color: var(--accent-teal); }
+  .slot-2 .card-countdown { color: var(--accent-purple); }
+  .slot-3 .card-countdown { color: var(--accent-red); }
+  .timer-card.warning-state .card-countdown {
+    color: var(--accent-orange) !important;
+    animation: blink 0.8s step-start infinite;
+  }
+  @keyframes blink { 50% { opacity: 0.3; } }
+
+  .progress-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
+  .progress-fill  { height: 100%; border-radius: 2px; transition: width 0.9s linear; }
+  .slot-0 .progress-fill { background: var(--accent-gold); }
+  .slot-1 .progress-fill { background: var(--accent-teal); }
+  .slot-2 .progress-fill { background: var(--accent-purple); }
+  .slot-3 .progress-fill { background: var(--accent-red); }
+
+  .card-status { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .card-status.ready   { color: #60ffb0; font-weight: 600; }
+  .card-status.warning { color: var(--accent-orange); font-weight: 600; }
+
+  .edit-hint {
+    font-size: 0.58rem; color: var(--muted); opacity: 0.5;
+    letter-spacing: 0.07em; text-align: right; margin-top: 6px;
+  }
+
+  /* TOAST */
+  #toast-container {
+    position: fixed; top: 20px; right: 20px;
+    display: flex; flex-direction: column; gap: 10px;
+    z-index: 999; pointer-events: none;
+  }
+  .toast {
+    padding: 14px 20px; border-radius: 10px;
+    font-family: 'Orbitron', monospace;
+    font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em;
+    border-left: 4px solid;
+    animation: slide-in 0.3s ease, fade-out 0.4s ease 3.6s forwards;
+    pointer-events: all; backdrop-filter: blur(8px);
+  }
+  @keyframes slide-in { from{transform:translateX(120%);opacity:0} to{transform:translateX(0);opacity:1} }
+  @keyframes fade-out { to{opacity:0;transform:translateX(60%)} }
+  .tc-0 { background:#1a1505cc; border-color:var(--accent-gold); color:var(--accent-gold); }
+  .tc-1 { background:#051a18cc; border-color:var(--accent-teal); color:var(--accent-teal); }
+  .tc-2 { background:#140d2acc; border-color:var(--accent-purple); color:var(--accent-purple); }
+  .tc-3 { background:#1a0505cc; border-color:var(--accent-red); color:var(--accent-red); }
+  .toast.is-warn { opacity: 0.85; font-size: 0.75rem; }
+
+  /* BOTTOM */
+  .bottom-row {
+    position: fixed; bottom: 20px; right: 20px;
+    display: flex; gap: 10px; align-items: center;
+  }
+  .mute-btn, .voice-btn {
+    background: var(--panel); border: 1px solid var(--border);
+    color: var(--muted); font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem; letter-spacing: 0.1em;
+    padding: 8px 16px; border-radius: 8px;
+    cursor: pointer; transition: all 0.2s;
+  }
+  .mute-btn:hover  { border-color: var(--accent-teal); color: var(--accent-teal); }
+  .mute-btn.muted  { color: var(--accent-red); border-color: #5a2020; }
+  .voice-btn.on    { color: var(--accent-purple); border-color: #5a3a8a; }
+  .voice-btn:hover { border-color: var(--accent-purple); color: var(--accent-purple); }
+</style>
+</head>
+<body>
+
+<div class="clock-panel">
+  <div class="clock-display" id="masterClock">00:00</div>
+  <div class="adjust-label">Set start time</div>
+  <div class="adjust-row">
+    <div class="spin-group">
+      <span class="spin-label">Min</span>
+      <input type="number" class="spin-input" id="startMin" value="0" min="0" max="99">
+    </div>
+    <div class="colon-sep">:</div>
+    <div class="spin-group">
+      <span class="spin-label">Sec</span>
+      <input type="number" class="spin-input" id="startSec" value="0" min="0" max="59">
+    </div>
+  </div>
+  <div class="btn-row">
+    <button class="btn btn-start" id="btnStart" onclick="toggleStart()">▶ START</button>
+    <button class="btn btn-reset" onclick="resetAll()">↺ RESET</button>
+  </div>
+  <div class="voice-status" id="voiceStatus">Voice: <span>detecting…</span></div>
+</div>
+
+<div class="timers-grid" id="timersGrid"></div>
+
+<div id="toast-container"></div>
+<div class="bottom-row">
+  <button class="voice-btn on" id="voiceBtn" onclick="toggleVoice()">🗣 VOICE ON</button>
+  <button class="mute-btn" id="muteBtn" onclick="toggleMute()">🔔 SOUND ON</button>
+</div>
+
+<script>
+// ── DEFAULT TIMER CONFIG ─────────────────────────────────────
+const DEFAULT_TIMERS = [
+  { name: 'BOUNTY', intMin: 4, intSec: 0  },
+  { name: 'LOTUS',  intMin: 1, intSec: 30 },
+  { name: 'WISDOM', intMin: 7, intSec: 0  },
+  { name: 'RUNE',   intMin: 2, intSec: 0  },
+];
+const BASE_FREQS = [1046, 880, 660, 740];
+const WARN_SECS  = 10;
+
+// runtime config — mirrors DOM
+let timerCfg = DEFAULT_TIMERS.map(t => ({ ...t }));
+
+// ── STATE ────────────────────────────────────────────────────
+let running = false, muted = false, voiceOn = true;
+let elapsed = 0, startOffset = 0, intervalId = null;
+let lastNext = {}, warned = {};
+
+// ── AUDIO ────────────────────────────────────────────────────
+const AudioCtx = window.AudioContext || window.webkitAudioContext;
+let audioCtx = null;
+
+function beep(freq, dur=0.18, vol=0.35) {
+  if (muted) return;
+  try {
+    if (!audioCtx) audioCtx = new AudioCtx();
+    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.type = 'sine'; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+    o.start(); o.stop(audioCtx.currentTime + dur);
+  } catch(e) {}
+}
+function alertBeep(i, isWarn) {
+  const f = BASE_FREQS[i] || 880;
+  isWarn
+    ? (beep(f*.75,.12), setTimeout(()=>beep(f*.75,.1),150))
+    : (beep(f,.15),     setTimeout(()=>beep(f*1.5,.12),180));
+}
+
+// ── VOICE ────────────────────────────────────────────────────
+let chosenVoice = null;
+function initVoice() {
+  if (!window.speechSynthesis) { document.querySelector('#voiceStatus span').textContent='not supported'; return; }
+  const load = () => {
+    const v = speechSynthesis.getVoices();
+    chosenVoice = v.find(x=>x.name.includes('Google UK English Male'))
+               || v.find(x=>x.name.includes('Google US English'))
+               || v.find(x=>x.lang==='en-US'&&!x.localService)
+               || v.find(x=>x.lang.startsWith('en'))
+               || v[0] || null;
+    document.querySelector('#voiceStatus span').textContent =
+      chosenVoice ? chosenVoice.name.replace('Google ','') : 'default';
+  };
+  speechSynthesis.getVoices().length > 0 ? load() : (speechSynthesis.onvoiceschanged = load);
+}
+function speak(text) {
+  if (!voiceOn || !window.speechSynthesis) return;
+  speechSynthesis.cancel();
+  const u = new SpeechSynthesisUtterance(text);
+  if (chosenVoice) u.voice = chosenVoice;
+  u.rate=1.1; u.pitch=1.0; u.volume=1.0;
+  speechSynthesis.speak(u);
+}
+initVoice();
+
+// ── TOAST ────────────────────────────────────────────────────
+function showToast(i, msg, isWarn) {
+  const t = document.createElement('div');
+  t.className = `toast tc-${i}${isWarn?' is-warn':''}`;
+  t.textContent = (isWarn?'⚠ ':'⚡ ') + msg;
+  document.getElementById('toast-container').appendChild(t);
+  setTimeout(()=>t.remove(), isWarn?4500:3200);
+}
+
+// ── HELPERS ──────────────────────────────────────────────────
+function fmt(s) {
+  const m=Math.floor(Math.abs(s)/60), sec=Math.abs(s)%60;
+  return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
+}
+function cfgSecs(i) { return timerCfg[i].intMin*60 + timerCfg[i].intSec; }
+function clampSec(v) { return Math.min(59, Math.max(0, parseInt(v)||0)); }
+
+// ── BUILD CARDS ──────────────────────────────────────────────
+function buildCards() {
+  const grid = document.getElementById('timersGrid');
+  grid.innerHTML = '';
+  timerCfg.forEach((cfg, i) => {
+    const d = document.createElement('div');
+    d.className = `timer-card slot-${i}`;
+    d.id = `card-${i}`;
+    d.innerHTML = `
+      <div class="card-header">
+        <input class="card-name-input" id="name-${i}"
+          value="${cfg.name}" maxlength="14"
+          title="Click to rename"
+          onblur="onNameChange(${i},this.value)"
+          onkeydown="if(event.key==='Enter')this.blur()">
+        <div class="interval-group">
+          <span class="interval-label">Every</span>
+          <div class="interval-inputs">
+            <input type="number" class="int-input" id="intMin-${i}"
+              value="${cfg.intMin}" min="0" max="99" title="Minutes"
+              onblur="onIntervalChange(${i})"
+              onkeydown="if(event.key==='Enter')this.blur()">
+            <span class="int-colon">:</span>
+            <input type="number" class="int-input" id="intSec-${i}"
+              value="${String(cfg.intSec).padStart(2,'0')}" min="0" max="59" title="Seconds"
+              onblur="onIntervalChange(${i})"
+              onkeydown="if(event.key==='Enter')this.blur()">
+          </div>
+        </div>
+      </div>
+      <div class="card-countdown" id="cd-${i}">${fmt(cfgSecs(i))}</div>
+      <div class="progress-track"><div class="progress-fill" id="pf-${i}" style="width:100%"></div></div>
+      <div class="card-status" id="st-${i}">WAITING</div>
+      <div class="edit-hint">✏ click name or interval to edit</div>
+    `;
+    grid.appendChild(d);
+  });
+}
+
+// ── EDIT HANDLERS ────────────────────────────────────────────
+function onNameChange(i, val) {
+  const clean = val.trim().toUpperCase() || `TIMER ${i+1}`;
+  timerCfg[i].name = clean;
+  document.getElementById(`name-${i}`).value = clean;
+}
+
+function onIntervalChange(i) {
+  const m = Math.max(0, parseInt(document.getElementById(`intMin-${i}`).value)||0);
+  const s = clampSec(document.getElementById(`intSec-${i}`).value);
+  document.getElementById(`intMin-${i}`).value = m;
+  document.getElementById(`intSec-${i}`).value = String(s).padStart(2,'0');
+  timerCfg[i].intMin = m;
+  timerCfg[i].intSec = s;
+  const secs = cfgSecs(i);
+  if (!running) {
+    document.getElementById(`cd-${i}`).textContent = fmt(secs > 0 ? secs : 0);
+    document.getElementById(`pf-${i}`).style.width = '100%';
+  } else if (secs > 0) {
+    // recalculate next fire from current position
+    const mod = elapsed % secs;
+    lastNext[i] = elapsed + (mod === 0 ? secs : secs - mod);
+    warned[i] = false;
+  }
+}
+
+// ── INIT & UPDATE ────────────────────────────────────────────
+function initTimers() {
+  timerCfg.forEach((_,i) => {
+    const secs = cfgSecs(i);
+    if (secs <= 0) { lastNext[i] = Infinity; warned[i]=false; return; }
+    const mod = elapsed % secs;
+    lastNext[i] = elapsed + (mod===0 ? secs : secs-mod);
+    warned[i] = false;
+    updateCard(i);
+  });
+}
+
+function updateCard(i) {
+  const secs = cfgSecs(i);
+  const remaining = Math.max(0, lastNext[i]-elapsed);
+  const pct = secs>0 ? Math.min(100,Math.max(0,((secs-remaining)/secs)*100)) : 0;
+
+  document.getElementById(`cd-${i}`).textContent = fmt(remaining);
+  document.getElementById(`pf-${i}`).style.width = (100-pct)+'%';
+
+  const card = document.getElementById(`card-${i}`);
+  const st   = document.getElementById(`st-${i}`);
+
+  if (!running || secs<=0) {
+    st.textContent='WAITING'; st.className='card-status';
+    card.classList.remove('warning-state');
+  } else if (remaining<=WARN_SECS && remaining>0) {
+    st.textContent=`INCOMING — ${remaining}s`; st.className='card-status warning';
+    card.classList.add('warning-state');
+  } else if (remaining===0) {
+    st.textContent='NOW!'; st.className='card-status ready';
+    card.classList.remove('warning-state');
+  } else {
+    st.textContent='ACTIVE'; st.className='card-status';
+    card.classList.remove('warning-state');
+  }
+}
+
+// ── TICK ─────────────────────────────────────────────────────
+function tick() {
+  elapsed++;
+  document.getElementById('masterClock').textContent = fmt(elapsed);
+
+  timerCfg.forEach((cfg,i) => {
+    if (lastNext[i]===Infinity) return;
+    const remaining = lastNext[i]-elapsed;
+
+    if (remaining===WARN_SECS && !warned[i]) {
+      warned[i]=true;
+      alertBeep(i,true);
+      speak(`${cfg.name.toLowerCase()} spawning in 10 seconds`);
+      showToast(i, `${cfg.name} — 10 seconds!`, true);
+      const card=document.getElementById(`card-${i}`);
+      card.classList.remove('warn'); void card.offsetWidth; card.classList.add('warn');
+      setTimeout(()=>card.classList.remove('warn'),1200);
+    }
+
+    if (elapsed>=lastNext[i]) {
+      alertBeep(i,false);
+      speak(`${cfg.name.toLowerCase()} has spawned`);
+      showToast(i, `${cfg.name} — SPAWNED`, false);
+      const card=document.getElementById(`card-${i}`);
+      card.classList.remove('alert','warning-state'); void card.offsetWidth; card.classList.add('alert');
+      setTimeout(()=>card.classList.remove('alert'),2000);
+      lastNext[i]+=cfgSecs(i);
+      warned[i]=false;
+    }
+    updateCard(i);
+  });
+}
+
+// ── CONTROLS ─────────────────────────────────────────────────
+function toggleStart() {
+  if (running) {
+    clearInterval(intervalId); running=false;
+    document.getElementById('btnStart').textContent='▶ START';
+    document.getElementById('masterClock').classList.remove('running');
+    timerCfg.forEach((_,i)=>updateCard(i));
+  } else {
+    if (!audioCtx) audioCtx=new AudioCtx();
+    if (!intervalId || elapsed===startOffset) {
+      startOffset=(parseInt(document.getElementById('startMin').value)||0)*60
+                 +clampSec(document.getElementById('startSec').value);
+      elapsed=startOffset;
+      document.getElementById('masterClock').textContent=fmt(elapsed);
+      initTimers();
+    }
+    running=true;
+    document.getElementById('btnStart').textContent='⏸ PAUSE';
+    document.getElementById('masterClock').classList.add('running');
+    intervalId=setInterval(tick,1000);
+  }
+}
+
+function resetAll() {
+  clearInterval(intervalId); intervalId=null; running=false; elapsed=0;
+  window.speechSynthesis&&speechSynthesis.cancel();
+  document.getElementById('btnStart').textContent='▶ START';
+  document.getElementById('masterClock').textContent='00:00';
+  document.getElementById('masterClock').classList.remove('running');
+  document.getElementById('startMin').value=0;
+  document.getElementById('startSec').value=0;
+  timerCfg.forEach((_,i)=>{
+    document.getElementById(`cd-${i}`).textContent=fmt(cfgSecs(i));
+    document.getElementById(`pf-${i}`).style.width='100%';
+    document.getElementById(`st-${i}`).textContent='WAITING';
+    document.getElementById(`st-${i}`).className='card-status';
+    document.getElementById(`card-${i}`).classList.remove('warning-state','alert','warn');
+    warned[i]=false;
+  });
+}
+
+function toggleMute() {
+  muted=!muted;
+  const b=document.getElementById('muteBtn');
+  b.textContent=muted?'🔇 MUTED':'🔔 SOUND ON';
+  b.className=muted?'mute-btn muted':'mute-btn';
+}
+function toggleVoice() {
+  voiceOn=!voiceOn;
+  if (!voiceOn) window.speechSynthesis&&speechSynthesis.cancel();
+  const b=document.getElementById('voiceBtn');
+  b.textContent=voiceOn?'🗣 VOICE ON':'🔇 VOICE OFF';
+  b.className=voiceOn?'voice-btn on':'voice-btn';
+}
+
+document.getElementById('startSec').addEventListener('blur',function(){
+  this.value=clampSec(this.value);
+});
+
+// ── INIT ─────────────────────────────────────────────────────
+buildCards();
+</script>
+</body>
+</html>

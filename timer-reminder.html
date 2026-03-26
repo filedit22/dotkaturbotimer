@@ -587,7 +587,7 @@ function tick() {
     if (remaining === WARN_SECS && !warned[key]) {
       warned[key] = true;
       alertBeep(key, true);
-      speak(cfg.speak);
+      speak(cfg.speak + ' 10');
       showToast(key, cfg.label + ' — 10 seconds!', true);
       // flash card
       const card = document.getElementById('card-' + key);

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Turbominder 1.05</title>
+<title>Turbominder 1.06</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -357,6 +357,7 @@ let timerCfg = DEFAULT_TIMERS.map(t => ({ ...t }));
 let running = false, muted = false, voiceOn = true;
 let elapsed = 0, startOffset = 0, intervalId = null;
 let lastNext = {}, warned = {};
+let startTime = 0;
 
 // ── AUDIO ────────────────────────────────────────────────────
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
@@ -529,7 +530,7 @@ function updateCard(i) {
 
 // ── TICK ─────────────────────────────────────────────────────
 function tick() {
-  elapsed++;
+  elapsed = Math.floor((Date.now() - startTime) / 1000);
   document.getElementById('masterClock').textContent = fmt(elapsed);
 
   timerCfg.forEach((cfg,i) => {
@@ -571,10 +572,14 @@ function toggleStart() {
     if (!audioCtx) audioCtx=new AudioCtx();
     if (!intervalId || elapsed===startOffset) {
       startOffset=(parseInt(document.getElementById('startMin').value)||0)*60
-                 +clampSec(document.getElementById('startSec').value);
-      elapsed=startOffset;
-      document.getElementById('masterClock').textContent=fmt(elapsed);
-      initTimers();
+           +clampSec(document.getElementById('startSec').value);
+
+// ✅ use real time instead of fake ticking
+startTime = Date.now() - (startOffset * 1000);
+
+elapsed = startOffset;
+document.getElementById('masterClock').textContent = fmt(elapsed);
+initTimers();
     }
     running=true;
     document.getElementById('btnStart').textContent='⏸ PAUSE';
@@ -621,6 +626,11 @@ document.getElementById('startSec').addEventListener('blur',function(){
 
 // ── INIT ─────────────────────────────────────────────────────
 buildCards();
+  document.addEventListener("visibilitychange", () => {
+  if (!document.hidden && running) {
+    tick(); // instantly resync when returning to tab
+  }
+});
 </script>
 </body>
 </html>

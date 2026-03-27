@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Turbominder 1.03</title>
+<title>Turbominder 1.01</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -31,12 +31,27 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding: 32px 16px 80px;
+    padding: 32px 16px 48px;
     background-image:
       radial-gradient(ellipse at 20% 10%, #1a1030 0%, transparent 50%),
       radial-gradient(ellipse at 80% 90%, #0a1a20 0%, transparent 50%);
   }
-
+  h1 {
+    font-family: 'Orbitron', monospace;
+    font-size: clamp(1.4rem, 4vw, 2.2rem);
+    font-weight: 900;
+    letter-spacing: 0.15em;
+    color: var(--accent-gold);
+    text-shadow: var(--glow-gold);
+    margin-bottom: 8px;
+  }
+  .subtitle {
+    font-size: 0.9rem;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    margin-bottom: 32px;
+  }
   /* MASTER CLOCK */
   .clock-panel {
     background: var(--panel);
@@ -69,6 +84,7 @@
     transition: color 0.3s;
   }
   .clock-display.running { color: #60ffb0; text-shadow: 0 0 20px #60ffb066; }
+  /* ADJUST CLOCK */
   .adjust-row {
     display: flex;
     align-items: center;
@@ -86,10 +102,21 @@
     text-align: center;
     margin-bottom: 4px;
   }
-  .spin-group { display: flex; flex-direction: column; align-items: center; gap: 4px; }
-  .spin-label { font-size: 0.7rem; letter-spacing: 0.12em; color: var(--muted); text-transform: uppercase; }
+  .spin-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+  }
+  .spin-label {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
   .spin-input {
-    width: 72px; text-align: center;
+    width: 72px;
+    text-align: center;
     background: #0d0f14;
     border: 1px solid var(--border);
     border-radius: 8px;
@@ -104,214 +131,238 @@
   .spin-input::-webkit-outer-spin-button,
   .spin-input::-webkit-inner-spin-button { -webkit-appearance: none; }
   .spin-input[type=number] { -moz-appearance: textfield; }
-  .colon-sep { font-family: 'Orbitron', monospace; font-size: 1.6rem; color: var(--muted); margin-top: 18px; }
+  .colon-sep {
+    font-family: 'Orbitron', monospace;
+    font-size: 1.6rem;
+    color: var(--muted);
+    margin-top: 18px;
+  }
+  /* BUTTONS */
   .btn-row { display: flex; gap: 12px; justify-content: center; }
   .btn {
     font-family: 'Orbitron', monospace;
-    font-size: 0.8rem; font-weight: 700;
+    font-size: 0.8rem;
+    font-weight: 700;
     letter-spacing: 0.12em;
     padding: 12px 28px;
-    border-radius: 8px; border: none;
-    cursor: pointer; transition: all 0.18s;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.18s;
     text-transform: uppercase;
   }
   .btn-start {
     background: linear-gradient(135deg, #1a4a30, #0d6e44);
-    color: #60ffb0; border: 1px solid #0d6e44;
+    color: #60ffb0;
+    border: 1px solid #0d6e44;
     box-shadow: 0 0 12px #0d6e4444;
   }
   .btn-start:hover { background: linear-gradient(135deg, #1e5836, #0f8052); box-shadow: 0 0 20px #0d6e4466; }
   .btn-reset {
     background: linear-gradient(135deg, #2a1a1a, #5a2020);
-    color: var(--accent-red); border: 1px solid #5a2020;
+    color: var(--accent-red);
+    border: 1px solid #5a2020;
     box-shadow: 0 0 12px #5a202044;
   }
   .btn-reset:hover { background: linear-gradient(135deg, #3a2020, #7a2828); box-shadow: 0 0 20px #ff555544; }
+  /* VOICE STATUS */
   .voice-status {
-    margin-top: 14px; font-size: 0.72rem;
-    letter-spacing: 0.1em; color: var(--muted); text-transform: uppercase;
+    margin-top: 14px;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
   }
   .voice-status span { color: var(--accent-teal); }
-
   /* TIMER CARDS */
   .timers-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-    gap: 16px; width: 100%; max-width: 520px;
+    gap: 16px;
+    width: 100%;
+    max-width: 520px;
   }
   .timer-card {
     background: var(--panel);
     border: 1px solid var(--border);
     border-radius: 14px;
-    padding: 16px 16px 14px;
-    position: relative; overflow: hidden;
+    padding: 20px 18px 16px;
+    position: relative;
+    overflow: hidden;
     transition: transform 0.2s, box-shadow 0.3s;
   }
   .timer-card::before {
     content: '';
     position: absolute;
-    top: 0; left: 0; right: 0; height: 3px;
+    top: 0; left: 0; right: 0;
+    height: 3px;
   }
-  /* color slots */
-  .slot-0::before { background: var(--accent-gold); }
-  .slot-1::before { background: var(--accent-teal); }
-  .slot-2::before { background: var(--accent-purple); }
-  .slot-3::before { background: var(--accent-red); }
-
+  .timer-card.bounty::before { background: var(--accent-gold); }
+  .timer-card.lotus::before  { background: var(--accent-teal); }
+  .timer-card.wisdom::before { background: var(--accent-purple); }
+  .timer-card.rune::before   { background: var(--accent-red); }
   .timer-card.alert { animation: pulse-card 0.6s ease-in-out 3; }
   .timer-card.warn  { animation: pulse-warn 0.5s ease-in-out 2; }
-  @keyframes pulse-card { 0%,100%{transform:scale(1)} 50%{transform:scale(1.03)} }
-  @keyframes pulse-warn  { 0%,100%{transform:scale(1)} 50%{transform:scale(1.02)} }
-
-  .slot-0.alert { box-shadow: var(--glow-gold), 0 0 40px #f0c04040; }
-  .slot-1.alert { box-shadow: var(--glow-teal), 0 0 40px #40d9c040; }
-  .slot-2.alert { box-shadow: var(--glow-purple), 0 0 40px #9b6dff40; }
-  .slot-3.alert { box-shadow: var(--glow-red), 0 0 40px #ff555540; }
-  .slot-0.warn  { box-shadow: 0 0 20px #f0c04088; }
-  .slot-1.warn  { box-shadow: 0 0 20px #40d9c088; }
-  .slot-2.warn  { box-shadow: 0 0 20px #9b6dff88; }
-  .slot-3.warn  { box-shadow: 0 0 20px #ff555588; }
-
-  /* ── CARD HEADER ── */
+  @keyframes pulse-card {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+  @keyframes pulse-warn {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.02); }
+  }
+  .timer-card.bounty.alert  { box-shadow: var(--glow-gold), 0 0 40px #f0c04040; }
+  .timer-card.lotus.alert   { box-shadow: var(--glow-teal), 0 0 40px #40d9c040; }
+  .timer-card.wisdom.alert  { box-shadow: var(--glow-purple), 0 0 40px #9b6dff40; }
+  .timer-card.rune.alert    { box-shadow: var(--glow-red), 0 0 40px #ff555540; }
+  .timer-card.bounty.warn   { box-shadow: 0 0 20px #f0c04088; }
+  .timer-card.lotus.warn    { box-shadow: 0 0 20px #40d9c088; }
+  .timer-card.wisdom.warn   { box-shadow: 0 0 20px #9b6dff88; }
+  .timer-card.rune.warn     { box-shadow: 0 0 20px #ff555588; }
   .card-header {
     display: flex;
     justify-content: space-between;
-    align-items: center;
-    margin-bottom: 12px;
-    gap: 8px;
+    align-items: flex-start;
+    margin-bottom: 14px;
   }
-
-  /* Editable name */
-  .card-name-input {
+  .card-name {
     font-family: 'Orbitron', monospace;
-    font-size: 0.85rem; font-weight: 700;
+    font-size: 0.85rem;
+    font-weight: 700;
     letter-spacing: 0.1em;
-    background: transparent;
-    border: none;
-    border-bottom: 1px dashed transparent;
-    outline: none;
-    width: 120px;
-    text-transform: uppercase;
-    cursor: pointer;
-    transition: border-color 0.2s, background 0.2s, padding 0.15s;
-    padding: 2px 4px;
-    border-radius: 4px 4px 0 0;
   }
-  .card-name-input:hover  { border-bottom-color: var(--muted); }
-  .card-name-input:focus  {
-    background: #0d0f14;
-    border-bottom-color: var(--accent-teal);
-    cursor: text;
+  .card-name.bounty  { color: var(--accent-gold); }
+  .card-name.lotus   { color: var(--accent-teal); }
+  .card-name.wisdom  { color: var(--accent-purple); }
+  .card-name.rune    { color: var(--accent-red); }
+  .card-interval {
+    font-size: 0.7rem;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-align: right;
+    line-height: 1.3;
   }
-  .slot-0 .card-name-input { color: var(--accent-gold); }
-  .slot-1 .card-name-input { color: var(--accent-teal); }
-  .slot-2 .card-name-input { color: var(--accent-purple); }
-  .slot-3 .card-name-input { color: var(--accent-red); }
-
-  /* Interval editor */
-  .interval-group {
-    display: flex; flex-direction: column;
-    align-items: flex-end; gap: 2px; flex-shrink: 0;
-  }
-  .interval-label {
-    font-size: 0.6rem; color: var(--muted);
-    letter-spacing: 0.1em; text-transform: uppercase;
-  }
-  .interval-inputs { display: flex; align-items: center; gap: 2px; }
-  .int-input {
-    width: 36px; text-align: center;
-    background: #0d0f14;
-    border: 1px solid var(--border);
-    border-radius: 5px;
-    color: var(--text);
-    font-family: 'Orbitron', monospace;
-    font-size: 0.78rem;
-    padding: 3px 2px; outline: none;
-    transition: border-color 0.2s, box-shadow 0.2s;
-  }
-  .int-input:focus { border-color: var(--accent-teal); box-shadow: 0 0 8px #40d9c033; }
-  .int-input::-webkit-outer-spin-button,
-  .int-input::-webkit-inner-spin-button { -webkit-appearance: none; }
-  .int-input[type=number] { -moz-appearance: textfield; }
-  .int-colon { font-family: 'Orbitron', monospace; font-size: 0.78rem; color: var(--muted); }
-
-  /* Countdown */
   .card-countdown {
     font-family: 'Orbitron', monospace;
-    font-size: 2rem; font-weight: 700;
-    line-height: 1; margin-bottom: 10px;
+    font-size: 2rem;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 10px;
     transition: color 0.3s;
   }
-  .slot-0 .card-countdown { color: var(--accent-gold); }
-  .slot-1 .card-countdown { color: var(--accent-teal); }
-  .slot-2 .card-countdown { color: var(--accent-purple); }
-  .slot-3 .card-countdown { color: var(--accent-red); }
-  .timer-card.warning-state .card-countdown {
-    color: var(--accent-orange) !important;
-    animation: blink 0.8s step-start infinite;
-  }
+  .bounty  .card-countdown { color: var(--accent-gold); }
+  .lotus   .card-countdown { color: var(--accent-teal); }
+  .wisdom  .card-countdown { color: var(--accent-purple); }
+  .rune    .card-countdown { color: var(--accent-red); }
+  /* warning pulse color for countdown */
+  .timer-card.warning-state .card-countdown { color: var(--accent-orange) !important; animation: blink 0.8s step-start infinite; }
   @keyframes blink { 50% { opacity: 0.3; } }
-
-  .progress-track { height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; margin-bottom: 10px; }
-  .progress-fill  { height: 100%; border-radius: 2px; transition: width 0.9s linear; }
-  .slot-0 .progress-fill { background: var(--accent-gold); }
-  .slot-1 .progress-fill { background: var(--accent-teal); }
-  .slot-2 .progress-fill { background: var(--accent-purple); }
-  .slot-3 .progress-fill { background: var(--accent-red); }
-
-  .card-status { font-size: 0.7rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); }
+  .progress-track {
+    height: 4px;
+    background: var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-bottom: 10px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 2px;
+    transition: width 0.9s linear;
+  }
+  .bounty  .progress-fill { background: var(--accent-gold); }
+  .lotus   .progress-fill { background: var(--accent-teal); }
+  .wisdom  .progress-fill { background: var(--accent-purple); }
+  .rune    .progress-fill { background: var(--accent-red); }
+  .card-status {
+    font-size: 0.7rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
   .card-status.ready   { color: #60ffb0; font-weight: 600; }
   .card-status.warning { color: var(--accent-orange); font-weight: 600; }
-
-  .edit-hint {
-    font-size: 0.58rem; color: var(--muted); opacity: 0.5;
-    letter-spacing: 0.07em; text-align: right; margin-top: 6px;
-  }
-
   /* TOAST */
   #toast-container {
-    position: fixed; top: 20px; right: 20px;
-    display: flex; flex-direction: column; gap: 10px;
-    z-index: 999; pointer-events: none;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    z-index: 999;
+    pointer-events: none;
   }
   .toast {
-    padding: 14px 20px; border-radius: 10px;
+    padding: 14px 20px;
+    border-radius: 10px;
     font-family: 'Orbitron', monospace;
-    font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em;
+    font-size: 0.8rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
     border-left: 4px solid;
     animation: slide-in 0.3s ease, fade-out 0.4s ease 3.6s forwards;
-    pointer-events: all; backdrop-filter: blur(8px);
+    pointer-events: all;
+    backdrop-filter: blur(8px);
   }
-  @keyframes slide-in { from{transform:translateX(120%);opacity:0} to{transform:translateX(0);opacity:1} }
-  @keyframes fade-out { to{opacity:0;transform:translateX(60%)} }
-  .tc-0 { background:#1a1505cc; border-color:var(--accent-gold); color:var(--accent-gold); }
-  .tc-1 { background:#051a18cc; border-color:var(--accent-teal); color:var(--accent-teal); }
-  .tc-2 { background:#140d2acc; border-color:var(--accent-purple); color:var(--accent-purple); }
-  .tc-3 { background:#1a0505cc; border-color:var(--accent-red); color:var(--accent-red); }
+  @keyframes slide-in {
+    from { transform: translateX(120%); opacity: 0; }
+    to   { transform: translateX(0);    opacity: 1; }
+  }
+  @keyframes fade-out {
+    to { opacity: 0; transform: translateX(60%); }
+  }
+  .toast.bounty  { background: #1a1505cc; border-color: var(--accent-gold); color: var(--accent-gold); }
+  .toast.lotus   { background: #051a18cc; border-color: var(--accent-teal); color: var(--accent-teal); }
+  .toast.wisdom  { background: #140d2acc; border-color: var(--accent-purple); color: var(--accent-purple); }
+  .toast.rune    { background: #1a0505cc; border-color: var(--accent-red); color: var(--accent-red); }
   .toast.is-warn { opacity: 0.85; font-size: 0.75rem; }
-
-  /* BOTTOM */
+  /* BOTTOM ROW */
   .bottom-row {
-    position: fixed; bottom: 20px; right: 20px;
-    display: flex; gap: 10px; align-items: center;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
   }
-  .mute-btn, .voice-btn {
-    background: var(--panel); border: 1px solid var(--border);
-    color: var(--muted); font-family: 'Rajdhani', sans-serif;
-    font-size: 0.85rem; letter-spacing: 0.1em;
-    padding: 8px 16px; border-radius: 8px;
-    cursor: pointer; transition: all 0.2s;
+  .mute-btn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
   }
-  .mute-btn:hover  { border-color: var(--accent-teal); color: var(--accent-teal); }
-  .mute-btn.muted  { color: var(--accent-red); border-color: #5a2020; }
-  .voice-btn.on    { color: var(--accent-purple); border-color: #5a3a8a; }
+  .mute-btn:hover { border-color: var(--accent-teal); color: var(--accent-teal); }
+  .mute-btn.muted { color: var(--accent-red); border-color: #5a2020; }
+  .voice-btn {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .voice-btn.on  { color: var(--accent-purple); border-color: #5a3a8a; }
   .voice-btn:hover { border-color: var(--accent-purple); color: var(--accent-purple); }
 </style>
 </head>
 <body>
 
+<h1>⚔ SPAWN TIMERS</h1>
+<p class="subtitle">Never miss a respawn</p>
+
 <div class="clock-panel">
   <div class="clock-display" id="masterClock">00:00</div>
+
   <div class="adjust-label">Set start time</div>
   <div class="adjust-row">
     <div class="spin-group">
@@ -324,303 +375,310 @@
       <input type="number" class="spin-input" id="startSec" value="0" min="0" max="59">
     </div>
   </div>
+
   <div class="btn-row">
     <button class="btn btn-start" id="btnStart" onclick="toggleStart()">▶ START</button>
     <button class="btn btn-reset" onclick="resetAll()">↺ RESET</button>
   </div>
-  <div class="voice-status" id="voiceStatus">Voice: <span>detecting…</span></div>
+
+  <div class="voice-status" id="voiceStatus">Voice: <span>detecting...</span></div>
 </div>
 
-<div class="timers-grid" id="timersGrid"></div>
+<div class="timers-grid">
+  <div class="timer-card bounty" id="card-bounty">
+    <div class="card-header">
+      <span class="card-name bounty">BOUNTY</span>
+      <span class="card-interval">Every<br>4:00</span>
+    </div>
+    <div class="card-countdown" id="cd-bounty">4:00</div>
+    <div class="progress-track"><div class="progress-fill" id="pf-bounty" style="width:100%"></div></div>
+    <div class="card-status" id="st-bounty">WAITING</div>
+  </div>
+
+  <div class="timer-card lotus" id="card-lotus">
+    <div class="card-header">
+      <span class="card-name lotus">LOTUS</span>
+      <span class="card-interval">Every<br>1:30</span>
+    </div>
+    <div class="card-countdown" id="cd-lotus">1:30</div>
+    <div class="progress-track"><div class="progress-fill" id="pf-lotus" style="width:100%"></div></div>
+    <div class="card-status" id="st-lotus">WAITING</div>
+  </div>
+
+  <div class="timer-card wisdom" id="card-wisdom">
+    <div class="card-header">
+      <span class="card-name wisdom">WISDOM</span>
+      <span class="card-interval">Every<br>7:00</span>
+    </div>
+    <div class="card-countdown" id="cd-wisdom">7:00</div>
+    <div class="progress-track"><div class="progress-fill" id="pf-wisdom" style="width:100%"></div></div>
+    <div class="card-status" id="st-wisdom">WAITING</div>
+  </div>
+
+  <div class="timer-card rune" id="card-rune">
+    <div class="card-header">
+      <span class="card-name rune">RUNE</span>
+      <span class="card-interval">Every<br>2:00</span>
+    </div>
+    <div class="card-countdown" id="cd-rune">2:00</div>
+    <div class="progress-track"><div class="progress-fill" id="pf-rune" style="width:100%"></div></div>
+    <div class="card-status" id="st-rune">WAITING</div>
+  </div>
+</div>
 
 <div id="toast-container"></div>
+
 <div class="bottom-row">
   <button class="voice-btn on" id="voiceBtn" onclick="toggleVoice()">🗣 VOICE ON</button>
   <button class="mute-btn" id="muteBtn" onclick="toggleMute()">🔔 SOUND ON</button>
 </div>
 
 <script>
-// ── DEFAULT TIMER CONFIG ─────────────────────────────────────
-const DEFAULT_TIMERS = [
-  { name: 'BOUNTY', intMin: 4, intSec: 0  },
-  { name: 'LOTUS',  intMin: 1, intSec: 30 },
-  { name: 'WISDOM', intMin: 7, intSec: 0  },
-  { name: 'RUNE',   intMin: 2, intSec: 0  },
-];
-const BASE_FREQS = [1046, 880, 660, 740];
-const WARN_SECS  = 10;
+// CONFIG
+const TIMERS = {
+  bounty: { interval: 240, label: 'BOUNTY',  speak: 'Bounty' },
+  lotus:  { interval: 90,  label: 'LOTUS',   speak: 'Lotus' },
+  wisdom: { interval: 420, label: 'WISDOM',  speak: 'Wisdom' },
+  rune:   { interval: 120, label: 'RUNE',    speak: 'Rune' },
+};
+const WARN_SECS = 10;
 
-// runtime config — mirrors DOM
-let timerCfg = DEFAULT_TIMERS.map(t => ({ ...t }));
+// STATE
+let running     = false;
+let muted       = false;
+let voiceOn     = true;
+let elapsed     = 0;
+let startOffset = 0;
+let intervalId  = null;
+let lastNext    = {};
+const warned    = {};   // tracks 10s warning per cycle
 
-// ── STATE ────────────────────────────────────────────────────
-let running = false, muted = false, voiceOn = true;
-let elapsed = 0, startOffset = 0, intervalId = null;
-let lastNext = {}, warned = {};
-
-// ── AUDIO ────────────────────────────────────────────────────
+// AUDIO
 const AudioCtx = window.AudioContext || window.webkitAudioContext;
 let audioCtx = null;
 
-function beep(freq, dur=0.18, vol=0.35) {
+function beep(freq = 880, duration = 0.18, vol = 0.35) {
   if (muted) return;
   try {
     if (!audioCtx) audioCtx = new AudioCtx();
-    const o = audioCtx.createOscillator(), g = audioCtx.createGain();
-    o.connect(g); g.connect(audioCtx.destination);
-    o.type = 'sine'; o.frequency.value = freq;
-    g.gain.setValueAtTime(vol, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
-    o.start(); o.stop(audioCtx.currentTime + dur);
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain); gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.value = freq;
+    gain.gain.setValueAtTime(vol, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+    osc.start(); osc.stop(audioCtx.currentTime + duration);
   } catch(e) {}
 }
-function alertBeep(i, isWarn) {
-  const f = BASE_FREQS[i] || 880;
-  isWarn
-    ? (beep(f*.75,.12), setTimeout(()=>beep(f*.75,.1),150))
-    : (beep(f,.15),     setTimeout(()=>beep(f*1.5,.12),180));
+
+function alertBeep(type, isWarn) {
+  const freqs = { bounty: 1046, lotus: 880, wisdom: 660, rune: 740 };
+  const f = freqs[type] || 880;
+  if (isWarn) {
+    beep(f * 0.75, 0.12); setTimeout(() => beep(f * 0.75, 0.1), 150);
+  } else {
+    beep(f, 0.15); setTimeout(() => beep(f * 1.5, 0.12), 180);
+  }
 }
 
-// ── VOICE ────────────────────────────────────────────────────
+// VOICE
 let chosenVoice = null;
+
 function initVoice() {
-  if (!window.speechSynthesis) { document.querySelector('#voiceStatus span').textContent='not supported'; return; }
+  if (!window.speechSynthesis) {
+    document.querySelector('#voiceStatus span').textContent = 'not supported';
+    return;
+  }
   const load = () => {
-    const v = speechSynthesis.getVoices();
-    chosenVoice = v.find(x=>x.name.includes('Google UK English Male'))
-               || v.find(x=>x.name.includes('Google US English'))
-               || v.find(x=>x.lang==='en-US'&&!x.localService)
-               || v.find(x=>x.lang.startsWith('en'))
-               || v[0] || null;
-    document.querySelector('#voiceStatus span').textContent =
-      chosenVoice ? chosenVoice.name.replace('Google ','') : 'default';
+    const voices = speechSynthesis.getVoices();
+    chosenVoice =
+      voices.find(v => v.name.includes('Google UK English Male')) ||
+      voices.find(v => v.name.includes('Google US English'))      ||
+      voices.find(v => v.lang === 'en-US' && !v.localService)     ||
+      voices.find(v => v.lang.startsWith('en'))                   ||
+      voices[0] || null;
+    const name = chosenVoice ? chosenVoice.name.replace('Google ','') : 'default';
+    document.querySelector('#voiceStatus span').textContent = name;
   };
-  speechSynthesis.getVoices().length > 0 ? load() : (speechSynthesis.onvoiceschanged = load);
+  if (speechSynthesis.getVoices().length > 0) load();
+  else speechSynthesis.onvoiceschanged = load;
 }
+
 function speak(text) {
   if (!voiceOn || !window.speechSynthesis) return;
   speechSynthesis.cancel();
-  const u = new SpeechSynthesisUtterance(text);
-  if (chosenVoice) u.voice = chosenVoice;
-  u.rate=1.1; u.pitch=1.0; u.volume=1.0;
-  speechSynthesis.speak(u);
+  const utt = new SpeechSynthesisUtterance(text);
+  if (chosenVoice) utt.voice = chosenVoice;
+  utt.rate = 1.1; utt.pitch = 1.0; utt.volume = 1.0;
+  speechSynthesis.speak(utt);
 }
+
 initVoice();
 
-// ── TOAST ────────────────────────────────────────────────────
-function showToast(i, msg, isWarn) {
+// TOAST
+function showToast(type, message, isWarn) {
+  const container = document.getElementById('toast-container');
   const t = document.createElement('div');
-  t.className = `toast tc-${i}${isWarn?' is-warn':''}`;
-  t.textContent = (isWarn?'⚠ ':'⚡ ') + msg;
-  document.getElementById('toast-container').appendChild(t);
-  setTimeout(()=>t.remove(), isWarn?4500:3200);
+  t.className = 'toast ' + type + (isWarn ? ' is-warn' : '');
+  t.textContent = (isWarn ? '⚠ ' : '⚡ ') + message;
+  container.appendChild(t);
+  setTimeout(() => t.remove(), isWarn ? 4500 : 3200);
 }
 
-// ── HELPERS ──────────────────────────────────────────────────
+// HELPERS
 function fmt(s) {
-  const m=Math.floor(Math.abs(s)/60), sec=Math.abs(s)%60;
-  return String(m).padStart(2,'0')+':'+String(sec).padStart(2,'0');
-}
-function cfgSecs(i) { return timerCfg[i].intMin*60 + timerCfg[i].intSec; }
-function clampSec(v) { return Math.min(59, Math.max(0, parseInt(v)||0)); }
-
-// ── BUILD CARDS ──────────────────────────────────────────────
-function buildCards() {
-  const grid = document.getElementById('timersGrid');
-  grid.innerHTML = '';
-  timerCfg.forEach((cfg, i) => {
-    const d = document.createElement('div');
-    d.className = `timer-card slot-${i}`;
-    d.id = `card-${i}`;
-    d.innerHTML = `
-      <div class="card-header">
-        <input class="card-name-input" id="name-${i}"
-          value="${cfg.name}" maxlength="14"
-          title="Click to rename"
-          onblur="onNameChange(${i},this.value)"
-          onkeydown="if(event.key==='Enter')this.blur()">
-        <div class="interval-group">
-          <span class="interval-label">Every</span>
-          <div class="interval-inputs">
-            <input type="number" class="int-input" id="intMin-${i}"
-              value="${cfg.intMin}" min="0" max="99" title="Minutes"
-              onblur="onIntervalChange(${i})"
-              onkeydown="if(event.key==='Enter')this.blur()">
-            <span class="int-colon">:</span>
-            <input type="number" class="int-input" id="intSec-${i}"
-              value="${String(cfg.intSec).padStart(2,'0')}" min="0" max="59" title="Seconds"
-              onblur="onIntervalChange(${i})"
-              onkeydown="if(event.key==='Enter')this.blur()">
-          </div>
-        </div>
-      </div>
-      <div class="card-countdown" id="cd-${i}">${fmt(cfgSecs(i))}</div>
-      <div class="progress-track"><div class="progress-fill" id="pf-${i}" style="width:100%"></div></div>
-      <div class="card-status" id="st-${i}">WAITING</div>
-      <div class="edit-hint">✏ click name or interval to edit</div>
-    `;
-    grid.appendChild(d);
-  });
+  const m = Math.floor(Math.abs(s) / 60);
+  const sec = Math.abs(s) % 60;
+  return String(m).padStart(2,'0') + ':' + String(sec).padStart(2,'0');
 }
 
-// ── EDIT HANDLERS ────────────────────────────────────────────
-function onNameChange(i, val) {
-  const clean = val.trim().toUpperCase() || `TIMER ${i+1}`;
-  timerCfg[i].name = clean;
-  document.getElementById(`name-${i}`).value = clean;
+function getOffset() {
+  const m = parseInt(document.getElementById('startMin').value) || 0;
+  const s = parseInt(document.getElementById('startSec').value) || 0;
+  return m * 60 + Math.min(s, 59);
 }
 
-function onIntervalChange(i) {
-  const m = Math.max(0, parseInt(document.getElementById(`intMin-${i}`).value)||0);
-  const s = clampSec(document.getElementById(`intSec-${i}`).value);
-  document.getElementById(`intMin-${i}`).value = m;
-  document.getElementById(`intSec-${i}`).value = String(s).padStart(2,'0');
-  timerCfg[i].intMin = m;
-  timerCfg[i].intSec = s;
-  const secs = cfgSecs(i);
-  if (!running) {
-    document.getElementById(`cd-${i}`).textContent = fmt(secs > 0 ? secs : 0);
-    document.getElementById(`pf-${i}`).style.width = '100%';
-  } else if (secs > 0) {
-    // recalculate next fire from current position
-    const mod = elapsed % secs;
-    lastNext[i] = elapsed + (mod === 0 ? secs : secs - mod);
-    warned[i] = false;
+// INIT TIMERS
+function initTimers() {
+  for (const [key, cfg] of Object.entries(TIMERS)) {
+    const mod = elapsed % cfg.interval;
+    lastNext[key] = elapsed + (mod === 0 ? cfg.interval : cfg.interval - mod);
+    warned[key] = false;
+    updateCard(key);
   }
 }
 
-// ── INIT & UPDATE ────────────────────────────────────────────
-function initTimers() {
-  timerCfg.forEach((_,i) => {
-    const secs = cfgSecs(i);
-    if (secs <= 0) { lastNext[i] = Infinity; warned[i]=false; return; }
-    const mod = elapsed % secs;
-    lastNext[i] = elapsed + (mod===0 ? secs : secs-mod);
-    warned[i] = false;
-    updateCard(i);
-  });
-}
+function updateCard(key) {
+  const cfg = TIMERS[key];
+  const remaining = Math.max(0, lastNext[key] - elapsed);
+  const pct = Math.min(100, Math.max(0, ((cfg.interval - remaining) / cfg.interval) * 100));
 
-function updateCard(i) {
-  const secs = cfgSecs(i);
-  const remaining = Math.max(0, lastNext[i]-elapsed);
-  const pct = secs>0 ? Math.min(100,Math.max(0,((secs-remaining)/secs)*100)) : 0;
+  document.getElementById('cd-' + key).textContent = fmt(remaining);
+  document.getElementById('pf-' + key).style.width = (100 - pct) + '%';
 
-  document.getElementById(`cd-${i}`).textContent = fmt(remaining);
-  document.getElementById(`pf-${i}`).style.width = (100-pct)+'%';
+  const card = document.getElementById('card-' + key);
+  const st   = document.getElementById('st-' + key);
 
-  const card = document.getElementById(`card-${i}`);
-  const st   = document.getElementById(`st-${i}`);
-
-  if (!running || secs<=0) {
-    st.textContent='WAITING'; st.className='card-status';
+  if (!running) {
+    st.textContent = 'WAITING'; st.className = 'card-status';
     card.classList.remove('warning-state');
-  } else if (remaining<=WARN_SECS && remaining>0) {
-    st.textContent=`INCOMING — ${remaining}s`; st.className='card-status warning';
+  } else if (remaining <= WARN_SECS && remaining > 0) {
+    st.textContent = 'INCOMING — ' + remaining + 's'; st.className = 'card-status warning';
     card.classList.add('warning-state');
-  } else if (remaining===0) {
-    st.textContent='NOW!'; st.className='card-status ready';
+  } else if (remaining === 0) {
+    st.textContent = 'NOW!'; st.className = 'card-status ready';
     card.classList.remove('warning-state');
   } else {
-    st.textContent='ACTIVE'; st.className='card-status';
+    st.textContent = 'ACTIVE'; st.className = 'card-status';
     card.classList.remove('warning-state');
   }
 }
 
-// ── TICK ─────────────────────────────────────────────────────
+// TICK
 function tick() {
   elapsed++;
   document.getElementById('masterClock').textContent = fmt(elapsed);
 
-  timerCfg.forEach((cfg,i) => {
-    if (lastNext[i]===Infinity) return;
-    const remaining = lastNext[i]-elapsed;
+  for (const [key, cfg] of Object.entries(TIMERS)) {
+    const remaining = lastNext[key] - elapsed;
 
-    if (remaining===WARN_SECS && !warned[i]) {
-      warned[i]=true;
-      alertBeep(i,true);
-      speak(`${cfg.name.toLowerCase()} spawning in 10 seconds`);
-      showToast(i, `${cfg.name} — 10 seconds!`, true);
-      const card=document.getElementById(`card-${i}`);
-      card.classList.remove('warn'); void card.offsetWidth; card.classList.add('warn');
-      setTimeout(()=>card.classList.remove('warn'),1200);
+    // 10-second warning
+    if (remaining === WARN_SECS && !warned[key]) {
+      warned[key] = true;
+      alertBeep(key, true);
+      speak(cfg.speak + ' 10');
+      showToast(key, cfg.label + ' — 10 seconds!', true);
+      // flash card
+      const card = document.getElementById('card-' + key);
+      card.classList.remove('warn');
+      void card.offsetWidth;
+      card.classList.add('warn');
+      setTimeout(() => card.classList.remove('warn'), 1200);
     }
 
-    if (elapsed>=lastNext[i]) {
-      alertBeep(i,false);
-      speak(`${cfg.name.toLowerCase()} has spawned`);
-      showToast(i, `${cfg.name} — SPAWNED`, false);
-      const card=document.getElementById(`card-${i}`);
-      card.classList.remove('alert','warning-state'); void card.offsetWidth; card.classList.add('alert');
-      setTimeout(()=>card.classList.remove('alert'),2000);
-      lastNext[i]+=cfgSecs(i);
-      warned[i]=false;
+    // Spawn!
+    if (elapsed >= lastNext[key]) {
+      alertBeep(key, false);
+      speak(cfg.speak);
+      showToast(key, cfg.label + ' — SPAWNED', false);
+      const card = document.getElementById('card-' + key);
+      card.classList.remove('alert', 'warning-state');
+      void card.offsetWidth;
+      card.classList.add('alert');
+      setTimeout(() => card.classList.remove('alert'), 2000);
+      lastNext[key] += cfg.interval;
+      warned[key] = false;
     }
-    updateCard(i);
-  });
+
+    updateCard(key);
+  }
 }
 
-// ── CONTROLS ─────────────────────────────────────────────────
+// CONTROLS
 function toggleStart() {
   if (running) {
-    clearInterval(intervalId); running=false;
-    document.getElementById('btnStart').textContent='▶ START';
+    clearInterval(intervalId);
+    running = false;
+    document.getElementById('btnStart').textContent = '▶ START';
     document.getElementById('masterClock').classList.remove('running');
-    timerCfg.forEach((_,i)=>updateCard(i));
+    for (const key of Object.keys(TIMERS)) updateCard(key);
   } else {
-    if (!audioCtx) audioCtx=new AudioCtx();
-    if (!intervalId || elapsed===startOffset) {
-      startOffset=(parseInt(document.getElementById('startMin').value)||0)*60
-                 +clampSec(document.getElementById('startSec').value);
-      elapsed=startOffset;
-      document.getElementById('masterClock').textContent=fmt(elapsed);
+    if (!audioCtx) audioCtx = new AudioCtx();
+    if (!intervalId || elapsed === startOffset) {
+      startOffset = getOffset();
+      elapsed = startOffset;
+      document.getElementById('masterClock').textContent = fmt(elapsed);
       initTimers();
     }
-    running=true;
-    document.getElementById('btnStart').textContent='⏸ PAUSE';
+    running = true;
+    document.getElementById('btnStart').textContent = '⏸ PAUSE';
     document.getElementById('masterClock').classList.add('running');
-    intervalId=setInterval(tick,1000);
+    intervalId = setInterval(tick, 1000);
   }
 }
 
 function resetAll() {
-  clearInterval(intervalId); intervalId=null; running=false; elapsed=0;
-  window.speechSynthesis&&speechSynthesis.cancel();
-  document.getElementById('btnStart').textContent='▶ START';
-  document.getElementById('masterClock').textContent='00:00';
+  clearInterval(intervalId);
+  intervalId = null;
+  running = false;
+  elapsed = 0;
+  speechSynthesis && speechSynthesis.cancel();
+
+  document.getElementById('btnStart').textContent = '▶ START';
+  document.getElementById('masterClock').textContent = '00:00';
   document.getElementById('masterClock').classList.remove('running');
-  document.getElementById('startMin').value=0;
-  document.getElementById('startSec').value=0;
-  timerCfg.forEach((_,i)=>{
-    document.getElementById(`cd-${i}`).textContent=fmt(cfgSecs(i));
-    document.getElementById(`pf-${i}`).style.width='100%';
-    document.getElementById(`st-${i}`).textContent='WAITING';
-    document.getElementById(`st-${i}`).className='card-status';
-    document.getElementById(`card-${i}`).classList.remove('warning-state','alert','warn');
-    warned[i]=false;
-  });
+  document.getElementById('startMin').value = 0;
+  document.getElementById('startSec').value = 0;
+
+  for (const [key, cfg] of Object.entries(TIMERS)) {
+    document.getElementById('cd-' + key).textContent = fmt(cfg.interval);
+    document.getElementById('pf-' + key).style.width = '100%';
+    document.getElementById('st-' + key).textContent = 'WAITING';
+    document.getElementById('st-' + key).className = 'card-status';
+    document.getElementById('card-' + key).classList.remove('warning-state','alert','warn');
+    warned[key] = false;
+  }
 }
 
 function toggleMute() {
-  muted=!muted;
-  const b=document.getElementById('muteBtn');
-  b.textContent=muted?'🔇 MUTED':'🔔 SOUND ON';
-  b.className=muted?'mute-btn muted':'mute-btn';
+  muted = !muted;
+  const btn = document.getElementById('muteBtn');
+  btn.textContent = muted ? '🔇 MUTED' : '🔔 SOUND ON';
+  btn.className   = muted ? 'mute-btn muted' : 'mute-btn';
 }
+
 function toggleVoice() {
-  voiceOn=!voiceOn;
-  if (!voiceOn) window.speechSynthesis&&speechSynthesis.cancel();
-  const b=document.getElementById('voiceBtn');
-  b.textContent=voiceOn?'🗣 VOICE ON':'🔇 VOICE OFF';
-  b.className=voiceOn?'voice-btn on':'voice-btn';
+  voiceOn = !voiceOn;
+  if (!voiceOn) speechSynthesis && speechSynthesis.cancel();
+  const btn = document.getElementById('voiceBtn');
+  btn.textContent = voiceOn ? '🗣 VOICE ON' : '🔇 VOICE OFF';
+  btn.className   = voiceOn ? 'voice-btn on' : 'voice-btn';
 }
 
-document.getElementById('startSec').addEventListener('blur',function(){
-  this.value=clampSec(this.value);
+document.getElementById('startSec').addEventListener('blur', function() {
+  this.value = Math.min(59, Math.max(0, parseInt(this.value) || 0));
 });
-
-// ── INIT ─────────────────────────────────────────────────────
-buildCards();
 </script>
 </body>
 </html>

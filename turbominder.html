@@ -613,7 +613,7 @@ function updateCard(i) {
 
 // ── TICK ─────────────────────────────────────────────────────
 function tick() {
-  elapsed = startOffset + Math.floor((Date.now() - startTime) / 1000);
+  elapsed = Math.floor((Date.now() - startTime) / 1000);
   document.getElementById('masterClock').textContent = fmt(elapsed);
 
   timerCfg.forEach((cfg,i) => {

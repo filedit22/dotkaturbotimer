@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Turbominder 1.06</title>
+<title>Turbominder 1.07</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600&display=swap" rel="stylesheet">
 <style>
   :root {
@@ -152,7 +152,6 @@
     position: absolute;
     top: 0; left: 0; right: 0; height: 3px;
   }
-  /* color slots */
   .slot-0::before { background: var(--accent-gold); }
   .slot-1::before { background: var(--accent-teal); }
   .slot-2::before { background: var(--accent-purple); }
@@ -172,7 +171,23 @@
   .slot-2.warn  { box-shadow: 0 0 20px #9b6dff88; }
   .slot-3.warn  { box-shadow: 0 0 20px #ff555588; }
 
-  /* ── CARD HEADER ── */
+  /* muted card style */
+  .timer-card.sound-off { opacity: 0.75; }
+  .timer-card.sound-off::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: repeating-linear-gradient(
+      -45deg,
+      transparent,
+      transparent 6px,
+      #ffffff06 6px,
+      #ffffff06 7px
+    );
+    pointer-events: none;
+  }
+
+  /* CARD HEADER */
   .card-header {
     display: flex;
     justify-content: space-between;
@@ -181,7 +196,6 @@
     gap: 8px;
   }
 
-  /* Editable name */
   .card-name-input {
     font-family: 'Orbitron', monospace;
     font-size: 0.85rem; font-weight: 700;
@@ -190,28 +204,31 @@
     border: none;
     border-bottom: 1px dashed transparent;
     outline: none;
-    width: 120px;
+    width: 110px;
     text-transform: uppercase;
     cursor: pointer;
-    transition: border-color 0.2s, background 0.2s, padding 0.15s;
+    transition: border-color 0.2s, background 0.2s;
     padding: 2px 4px;
     border-radius: 4px 4px 0 0;
   }
   .card-name-input:hover  { border-bottom-color: var(--muted); }
-  .card-name-input:focus  {
-    background: #0d0f14;
-    border-bottom-color: var(--accent-teal);
-    cursor: text;
-  }
+  .card-name-input:focus  { background: #0d0f14; border-bottom-color: var(--accent-teal); cursor: text; }
   .slot-0 .card-name-input { color: var(--accent-gold); }
   .slot-1 .card-name-input { color: var(--accent-teal); }
   .slot-2 .card-name-input { color: var(--accent-purple); }
   .slot-3 .card-name-input { color: var(--accent-red); }
 
-  /* Interval editor */
+  /* right side of header: interval + mute toggle stacked */
+  .card-header-right {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 5px;
+    flex-shrink: 0;
+  }
   .interval-group {
     display: flex; flex-direction: column;
-    align-items: flex-end; gap: 2px; flex-shrink: 0;
+    align-items: flex-end; gap: 2px;
   }
   .interval-label {
     font-size: 0.6rem; color: var(--muted);
@@ -234,6 +251,47 @@
   .int-input::-webkit-inner-spin-button { -webkit-appearance: none; }
   .int-input[type=number] { -moz-appearance: textfield; }
   .int-colon { font-family: 'Orbitron', monospace; font-size: 0.78rem; color: var(--muted); }
+
+  /* per-timer sound toggle */
+  .sound-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .sound-toggle-track {
+    width: 30px; height: 15px;
+    border-radius: 8px;
+    background: #1e2330;
+    border: 1px solid var(--border);
+    position: relative;
+    transition: background 0.2s, border-color 0.2s;
+  }
+  .sound-toggle-track.on {
+    background: #1a3a28;
+    border-color: #40d9c066;
+  }
+  .sound-toggle-knob {
+    position: absolute;
+    top: 2px; left: 2px;
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: transform 0.2s, background 0.2s;
+  }
+  .sound-toggle-track.on .sound-toggle-knob {
+    transform: translateX(15px);
+    background: var(--accent-teal);
+  }
+  .sound-toggle-label {
+    font-size: 0.6rem;
+    letter-spacing: 0.08em;
+    color: var(--muted);
+    text-transform: uppercase;
+    transition: color 0.2s;
+  }
+  .sound-toggle.on .sound-toggle-label { color: var(--accent-teal); }
 
   /* Countdown */
   .card-countdown {
@@ -328,7 +386,7 @@
     <button class="btn btn-start" id="btnStart" onclick="toggleStart()">▶ START</button>
     <button class="btn btn-reset" onclick="resetAll()">↺ RESET</button>
   </div>
-<div class="voice-status" id="voiceStatus">Voice: <span>detecting...</span></div>
+  <div class="voice-status" id="voiceStatus">Voice: <span>detecting...</span></div>
 </div>
 
 <div class="timers-grid" id="timersGrid"></div>
@@ -340,7 +398,6 @@
 </div>
 
 <script>
-// ── DEFAULT TIMER CONFIG ─────────────────────────────────────
 const DEFAULT_TIMERS = [
   { name: 'BOUNTY', intMin: 4, intSec: 0  },
   { name: 'LOTUS',  intMin: 1, intSec: 30 },
@@ -350,10 +407,8 @@ const DEFAULT_TIMERS = [
 const BASE_FREQS = [1046, 880, 660, 740];
 const WARN_SECS  = 10;
 
-// runtime config — mirrors DOM
-let timerCfg = DEFAULT_TIMERS.map(t => ({ ...t }));
+let timerCfg = DEFAULT_TIMERS.map(t => ({ ...t, soundOn: true }));
 
-// ── STATE ────────────────────────────────────────────────────
 let running = false, muted = false, voiceOn = true;
 let elapsed = 0, startOffset = 0, intervalId = null;
 let lastNext = {}, warned = {};
@@ -375,6 +430,9 @@ function beep(freq, dur=0.18, vol=0.35) {
     o.start(); o.stop(audioCtx.currentTime + dur);
   } catch(e) {}
 }
+
+// isWarn=true → softer double beep; false → sharp spawn beep
+// soundOn per-timer is checked before calling this
 function alertBeep(i, isWarn) {
   const f = BASE_FREQS[i] || 880;
   isWarn
@@ -440,21 +498,32 @@ function buildCards() {
           title="Click to rename"
           onblur="onNameChange(${i},this.value)"
           onkeydown="if(event.key==='Enter')this.blur()">
-        <div class="interval-group">
-          <span class="interval-label">Every</span>
-          <div class="interval-inputs">
-            <input type="number" class="int-input" id="intMin-${i}"
-              value="${cfg.intMin}" min="0" max="99" title="Minutes"
-              onblur="onIntervalChange(${i})"
-              onkeydown="if(event.key==='Enter')this.blur()">
-            <span class="int-colon">:</span>
-            <input type="number" class="int-input" id="intSec-${i}"
-              value="${String(cfg.intSec).padStart(2,'0')}" min="0" max="59" title="Seconds"
-              onblur="onIntervalChange(${i})"
-              onkeydown="if(event.key==='Enter')this.blur()">
+
+        <div class="card-header-right">
+          <div class="interval-group">
+            <span class="interval-label">Every</span>
+            <div class="interval-inputs">
+              <input type="number" class="int-input" id="intMin-${i}"
+                value="${cfg.intMin}" min="0" max="99" title="Minutes"
+                onblur="onIntervalChange(${i})"
+                onkeydown="if(event.key==='Enter')this.blur()">
+              <span class="int-colon">:</span>
+              <input type="number" class="int-input" id="intSec-${i}"
+                value="${String(cfg.intSec).padStart(2,'0')}" min="0" max="59" title="Seconds"
+                onblur="onIntervalChange(${i})"
+                onkeydown="if(event.key==='Enter')this.blur()">
+            </div>
+          </div>
+
+          <div class="sound-toggle on" id="stoggle-${i}" onclick="toggleTimerSound(${i})" title="Toggle sound for this timer">
+            <div class="sound-toggle-track on" id="strack-${i}">
+              <div class="sound-toggle-knob"></div>
+            </div>
+            <span class="sound-toggle-label" id="slabel-${i}">🔔 SFX</span>
           </div>
         </div>
       </div>
+
       <div class="card-countdown" id="cd-${i}">${fmt(cfgSecs(i))}</div>
       <div class="progress-track"><div class="progress-fill" id="pf-${i}" style="width:100%"></div></div>
       <div class="card-status" id="st-${i}">WAITING</div>
@@ -462,6 +531,21 @@ function buildCards() {
     `;
     grid.appendChild(d);
   });
+}
+
+// ── SOUND TOGGLE PER TIMER ───────────────────────────────────
+function toggleTimerSound(i) {
+  timerCfg[i].soundOn = !timerCfg[i].soundOn;
+  const on = timerCfg[i].soundOn;
+  const card    = document.getElementById(`card-${i}`);
+  const toggle  = document.getElementById(`stoggle-${i}`);
+  const track   = document.getElementById(`strack-${i}`);
+  const label   = document.getElementById(`slabel-${i}`);
+
+  toggle.className = on ? 'sound-toggle on' : 'sound-toggle';
+  track.className  = on ? 'sound-toggle-track on' : 'sound-toggle-track';
+  label.textContent = on ? '🔔 SFX' : '🔇 SFX';
+  card.classList.toggle('sound-off', !on);
 }
 
 // ── EDIT HANDLERS ────────────────────────────────────────────
@@ -483,7 +567,6 @@ function onIntervalChange(i) {
     document.getElementById(`cd-${i}`).textContent = fmt(secs > 0 ? secs : 0);
     document.getElementById(`pf-${i}`).style.width = '100%';
   } else if (secs > 0) {
-    // recalculate next fire from current position
     const mod = elapsed % secs;
     lastNext[i] = elapsed + (mod === 0 ? secs : secs - mod);
     warned[i] = false;
@@ -530,17 +613,18 @@ function updateCard(i) {
 
 // ── TICK ─────────────────────────────────────────────────────
 function tick() {
-  elapsed = Math.floor((Date.now() - startTime) / 1000);
+  elapsed = startOffset + Math.floor((Date.now() - startTime) / 1000);
   document.getElementById('masterClock').textContent = fmt(elapsed);
 
   timerCfg.forEach((cfg,i) => {
     if (lastNext[i]===Infinity) return;
     const remaining = lastNext[i]-elapsed;
+    const soundAllowed = !muted && cfg.soundOn;
 
     if (remaining===WARN_SECS && !warned[i]) {
       warned[i]=true;
-      alertBeep(i,true);
-      speak(`${cfg.name.toLowerCase()}  10 `);
+      if (soundAllowed) alertBeep(i,true);
+      if (soundAllowed) speak(`${cfg.name.toLowerCase()} spawning in 10 seconds`);
       showToast(i, `${cfg.name} — 10 seconds!`, true);
       const card=document.getElementById(`card-${i}`);
       card.classList.remove('warn'); void card.offsetWidth; card.classList.add('warn');
@@ -548,8 +632,8 @@ function tick() {
     }
 
     if (elapsed>=lastNext[i]) {
-      alertBeep(i,false);
-      speak(`${cfg.name.toLowerCase()}  `);
+      if (soundAllowed) alertBeep(i,false);
+      if (soundAllowed) speak(`${cfg.name.toLowerCase()} has spawned`);
       showToast(i, `${cfg.name} — SPAWNED`, false);
       const card=document.getElementById(`card-${i}`);
       card.classList.remove('alert','warning-state'); void card.offsetWidth; card.classList.add('alert');
@@ -572,14 +656,11 @@ function toggleStart() {
     if (!audioCtx) audioCtx=new AudioCtx();
     if (!intervalId || elapsed===startOffset) {
       startOffset=(parseInt(document.getElementById('startMin').value)||0)*60
-           +clampSec(document.getElementById('startSec').value);
-
-// ✅ use real time instead of fake ticking
-startTime = Date.now() - (startOffset * 1000);
-
-elapsed = startOffset;
-document.getElementById('masterClock').textContent = fmt(elapsed);
-initTimers();
+                 +clampSec(document.getElementById('startSec').value);
+      startTime = Date.now() - (startOffset * 1000);
+      elapsed = startOffset;
+      document.getElementById('masterClock').textContent = fmt(elapsed);
+      initTimers();
     }
     running=true;
     document.getElementById('btnStart').textContent='⏸ PAUSE';
@@ -624,13 +705,11 @@ document.getElementById('startSec').addEventListener('blur',function(){
   this.value=clampSec(this.value);
 });
 
-// ── INIT ─────────────────────────────────────────────────────
-buildCards();
-  document.addEventListener("visibilitychange", () => {
-  if (!document.hidden && running) {
-    tick(); // instantly resync when returning to tab
-  }
+document.addEventListener('visibilitychange', () => {
+  if (!document.hidden && running) tick();
 });
+
+buildCards();
 </script>
 </body>
 </html>

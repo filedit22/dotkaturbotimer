@@ -624,7 +624,7 @@ function tick() {
     if (remaining===WARN_SECS && !warned[i]) {
       warned[i]=true;
       if (soundAllowed) alertBeep(i,true);
-      if (soundAllowed) speak(`${cfg.name.toLowerCase()} spawning in 10 seconds`);
+      if (soundAllowed) speak(`${cfg.name.toLowerCase()}  10 `);
       showToast(i, `${cfg.name} — 10 seconds!`, true);
       const card=document.getElementById(`card-${i}`);
       card.classList.remove('warn'); void card.offsetWidth; card.classList.add('warn');
@@ -633,7 +633,7 @@ function tick() {
 
     if (elapsed>=lastNext[i]) {
       if (soundAllowed) alertBeep(i,false);
-      if (soundAllowed) speak(`${cfg.name.toLowerCase()} has spawned`);
+      if (soundAllowed) speak(`${cfg.name.toLowerCase()} `);
       showToast(i, `${cfg.name} — SPAWNED`, false);
       const card=document.getElementById(`card-${i}`);
       card.classList.remove('alert','warning-state'); void card.offsetWidth; card.classList.add('alert');
